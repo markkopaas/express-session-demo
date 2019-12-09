@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 const MemoryStorage = require('memorystorage');
 const userStorage = new MemoryStorage('users');
+var session = require('express-session')
 
 const app = express();
 const port = 3001;
@@ -34,6 +35,10 @@ function createUser(data, cb) {
 app.use(express.static('static'));
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(session({
+    cookie: { maxAge: 86400000 },
+    secret: 'keyboard cat'
+}))
 
 app.post('/login', (req, res) => {
     console.log('here');
@@ -56,7 +61,7 @@ app.post('/login', (req, res) => {
             return;
         }
         console.log('login success', user);
-        //todo set cookie
+        req.session.user=user;
         res.redirect('/?success');
     })
         .catch(console.error);
@@ -75,9 +80,9 @@ app.post('/signup', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    const user = getAuthUser(req);
+    const user = req.session.user;
     if (user) {
-        res.send('Hello!' + user.name);
+        res.send('Hello!' + req.session.user.username);
         return;
     }
     return res.redirect('login.html');
